@@ -1,12 +1,13 @@
-import zlibrary
-import asyncio
-import time
 import os
 import re
-from lxml import etree
+import time
+import zlibrary
+import asyncio
+import logging
 import urllib.request
-from io import StringIO
 import pandas as pd
+from lxml import etree
+from io import StringIO
 from operator import itemgetter
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -15,7 +16,6 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-import logging
 
 logging.getLogger("zlibrary").addHandler(logging.StreamHandler())
 logging.getLogger("zlibrary").setLevel(logging.DEBUG)
@@ -52,6 +52,16 @@ def reload_vpn() :
 	loc += 1
 	time.sleep(5)
 
+def weirdshit(u) : return re.sub('[ |æ]*', '', re.sub('ô|ö|ò|ó', 'o', re.sub('ï|î|í|ì', 'i', re.sub('á|â|ä|à|å', 'a', re.sub(',|\.', '', re.sub('ü|û|ù|ú', 'u', re.sub('é|ê|ë|è', 'e', re.sub('\ |\?|\.|\!|\/|\;|\:|\n|\r|\\\'|\"|\\|', '', u.lower())))))))).replace('ÿ', 'y').replace('ñ', 'n').replace('ç', 'c')
+
+def namecmp(a ,b) :
+	if weirdshit(a) == weirdshit(b) :
+		return True
+	if weirdshit(a).find(weirdshit(b)) != -1:
+		# print(f'{a} == {b}')
+		# print(f'{weirdshit(a)} == {weirdshit(b)}')
+		return True
+	return False
 
 async def main():
 	lib = zlibrary.AsyncZlib()
@@ -77,7 +87,7 @@ async def main():
 	for i in all_results :
 		hit = 0
 		for x in all_results:
-			if str(i["name"]).lower() == str(x["name"]).lower() :
+			if namecmp(i["name"], x["name"]) :
 				if str(i["extension"]).lower() == str(x["extension"]).lower() :
 					if str(i["language"]).lower() == str(x["language"]).lower() :
 						hit += 1
