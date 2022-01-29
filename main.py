@@ -37,15 +37,19 @@ def check_exists_by_xpath(driver, xpath):
 loc = 0
 locations = ["AR", "DZ", "AM", "AU", "AUADL", "AUBNE", "AUMEL", "AUPER", "AUSYD", "AT", "AZ", "BS", "BD", "BY", "BZ", "BE", "BT", "BA", "BR", "BN", "BG", "CA", "CAYMQ", "CAYTO", "CAYVR", "CL", "CN", "CO", "CR", "HR", "KH", "CZ", "DK", "EE", "EC", "EG", "FI", "FR", "FRPAR", "GE", "GR", "DE", "HK", "HU", "IE", "ID", "IL", "IM", "IN", "IS", "IT", "ITMIL", "ITROM", "JP", "KG", "KZ", "LA", "LI", "LT", "LU", "LV", "ME", "MC", "MD", "MT", "MX", "MY", "NL", "NO", "NP", "NZ", "PA", "PE", "PH", "PK", "PL", "PT", "RO", "RU", "SG", "KR", "ES", "ESBCN", "SE", "SK", "ZA", "CH", "TH", "TR", "TW", "UA", "US", "USATL", "USBOS", "USCLT", "USCHI", "USCOL", "USDAL", "USHOU", "USIND", "USMCI", "USLAS", "USLAX", "USMIA", "USEWR", "USNYC", "USORD", "USPHL", "USPHX", "USPDX", "USSFO", "USSJC", "USSEA", "USWAS", "UY", "AE", "GB", "GBCVT", "VE", "VN"]
 
+loaded = []
+with open("loaded.txt", "r") as f:
+    for line in f:
+        loaded.append(line.strip())
 
 def reload_vpn() :
     global loc
-    loc += 1
     time.sleep(2)
     print('reloading vpn')
     os.system('hotspotshield disconnect')
     time.sleep(2)
     os.system(f'hotspotshield connect {locations[loc]}')
+    loc += 1
     time.sleep(5)
 
 
@@ -104,7 +108,7 @@ async def main():
     all_sets = [sorted_results[int(x)] for x in ids]
 
     reload_vpn()
-    q_safe = re.sub('\ |\?|\.|\!|\/|\;|\:|\n|\r', '', q)
+    q_safe = re.sub('\ |\?|\.|\!|\/|\;|\:|\n|\r|\\\'', '', q)
     os.system(f'mkdir {downpath}/{q_safe}')
     locations = ["DZ", "AM", "AU", "AUADL", "AUBNE", "AUMEL", "AUPER", "AUSYD", "AT", "AZ", "BS", "BD", "BY", "BZ", "BE", "BT", "BA", "BR", "BN", "BG", "CA", "CAYMQ", "CAYTO", "CAYVR", "CL", "CN", "CO", "CR", "HR", "KH", "CZ", "DK", "EE", "EC", "EG", "FI", "FR", "FRPAR", "GE", "GR", "DE", "HK", "HU", "IE", "ID", "IL", "IM", "IN", "IS", "IT", "ITMIL", "ITROM", "JP", "KG", "KZ", "LA", "LI", "LT", "LU", "LV", "ME", "MC", "MD", "MT", "MX", "MY", "NL", "NO", "NP", "NZ", "PA", "PE", "PH", "PK", "PL", "PT", "RO", "RU", "SG", "KR", "ES", "ESBCN", "SE", "SK", "ZA", "CH", "TH", "TR", "TW", "UA", "US", "USATL", "USBOS", "USCLT", "USCHI", "USCOL", "USDAL", "USHOU", "USIND", "USMCI", "USLAS", "USLAX", "USMIA", "USEWR", "USNYC", "USORD", "USPHL", "USPHX", "USPDX", "USSFO", "USSJC", "USSEA", "USWAS", "UY", "AE", "GB", "GBCVT", "VE", "VN"]
     options=Options()
@@ -115,31 +119,41 @@ async def main():
     options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/epub+zip,application/vnd.airzip.filesecure.azs,application/octet-stream")
     driver = webdriver.Firefox(service=service, options=options)
     for current_set in all_sets :
-        # print(current_set["url"])
-        fp = urllib.request.urlopen(current_set["url"])
-        mybytes = fp.read()
-        mystr = mybytes.decode("utf8")
-        fp.close()
-        html_parser = etree.HTMLParser()
-        str_io_obj = StringIO(mystr)
-        dom_tree = etree.parse(str_io_obj, parser=html_parser)
-        a_tag_list = dom_tree.xpath('//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a')
-        
-        for a in a_tag_list:
-            tmp0 = current_set["url"][:(current_set["url"].find('/book'))]
-            tmp1 = a.get('href')
-            url = str(f'{tmp0}{tmp1}')
-            # print(url)
-        # print('fuck you')
+        # # print(current_set["url"])
+        # fp = urllib.request.urlopen(current_set["url"])
+        # mybytes = fp.read()
+        # mystr = mybytes.decode("utf8")
+        # fp.close()
+        # html_parser = etree.HTMLParser()
+        # str_io_obj = StringIO(mystr)
+        # dom_tree = etree.parse(str_io_obj, parser=html_parser)
+        # a_tag_list = dom_tree.xpath('//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a')
+        # url = None
+        # for a in a_tag_list:
+        #     tmp1 = a.get('href')
+        #     url = tmp1
+        #     # print(url)
+        # if url == None :
+        #     a_tag_list = dom_tree.xpath('//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/b/div[1]/div[1]/div[1]/div/a')
+        #     for a in a_tag_list:
+        #         tmp1 = a.get('href')
+        #         url = tmp1
+        #     # print(url)
+        # # print('fuck you')
         while True :
             # print("here")
             driver.get(current_set["url"])
             print('Page title: ' + driver.title)
+
+            ext = re.sub(r'^.*?book', '', current_set["url"])
+            print(ext)
+            if ext in loaded : break
+
             try:
-                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")))
+                WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")))
             except :
                 try :
-                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")))
+                    WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/b/div[1]/div[1]/div[1]/div/a")))
                 except :
                     pass
             try :
@@ -150,6 +164,10 @@ async def main():
             if check_exists_by_xpath(driver, '/html/body/table/tbody/tr[2]/td/div/div/div/section') == True :
                 reload_vpn()
             else :
+                loaded.append(ext)
+                with open("loaded.txt", "w") as f:
+                    for s in loaded:
+                        f.write(str(s) +"\n")
                 break
         # print('there')
         # driver.implicitly_wait(10)
