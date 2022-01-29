@@ -14,6 +14,7 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException        
 import logging
 
 logging.getLogger("zlibrary").addHandler(logging.StreamHandler())
@@ -25,7 +26,27 @@ c = Options()
 c.add_argument("--headless")
 #adding headless parameter to webdriver object
 
+def check_exists_by_xpath(driver, xpath):
+    try:
+        driver.find_element(By.XPATH, xpath)
+    except NoSuchElementException:
+        return False
+    return True
 
+
+loc = 0
+locations = ["AR", "DZ", "AM", "AU", "AUADL", "AUBNE", "AUMEL", "AUPER", "AUSYD", "AT", "AZ", "BS", "BD", "BY", "BZ", "BE", "BT", "BA", "BR", "BN", "BG", "CA", "CAYMQ", "CAYTO", "CAYVR", "CL", "CN", "CO", "CR", "HR", "KH", "CZ", "DK", "EE", "EC", "EG", "FI", "FR", "FRPAR", "GE", "GR", "DE", "HK", "HU", "IE", "ID", "IL", "IM", "IN", "IS", "IT", "ITMIL", "ITROM", "JP", "KG", "KZ", "LA", "LI", "LT", "LU", "LV", "ME", "MC", "MD", "MT", "MX", "MY", "NL", "NO", "NP", "NZ", "PA", "PE", "PH", "PK", "PL", "PT", "RO", "RU", "SG", "KR", "ES", "ESBCN", "SE", "SK", "ZA", "CH", "TH", "TR", "TW", "UA", "US", "USATL", "USBOS", "USCLT", "USCHI", "USCOL", "USDAL", "USHOU", "USIND", "USMCI", "USLAS", "USLAX", "USMIA", "USEWR", "USNYC", "USORD", "USPHL", "USPHX", "USPDX", "USSFO", "USSJC", "USSEA", "USWAS", "UY", "AE", "GB", "GBCVT", "VE", "VN"]
+
+
+def reload_vpn() :
+    global loc
+    loc += 1
+    time.sleep(2)
+    print('reloading vpn')
+    os.system('hotspotshield disconnect')
+    time.sleep(2)
+    os.system(f'hotspotshield connect {locations[loc]}')
+    time.sleep(5)
 
 
 async def main():
@@ -52,9 +73,9 @@ async def main():
     for i in all_results :
         hit = 0
         for x in all_results:
-            if i["name"] == x["name"] :
-                if i["extension"] == x["extension"] :
-                    if i["language"] == x["language"] :
+            if str(i["name"]).lower() == str(x["name"]).lower() :
+                if str(i["extension"]).lower() == str(x["extension"]).lower() :
+                    if str(i["language"]).lower() == str(x["language"]).lower() :
                         hit += 1
         if hit == 1 :
             filtered_results.append(i)
@@ -82,15 +103,10 @@ async def main():
     print(ids)
     all_sets = [sorted_results[int(x)] for x in ids]
 
-    ran = 0
-    print('reloading vpn')
-    os.system('hotspotshield disconnect')
-    time.sleep(1)
-    os.system('hotspotshield connect')
-    time.sleep(1)
-
+    reload_vpn()
     q_safe = re.sub('\ |\?|\.|\!|\/|\;|\:|\n|\r', '', q)
     os.system(f'mkdir {downpath}/{q_safe}')
+    locations = ["DZ", "AM", "AU", "AUADL", "AUBNE", "AUMEL", "AUPER", "AUSYD", "AT", "AZ", "BS", "BD", "BY", "BZ", "BE", "BT", "BA", "BR", "BN", "BG", "CA", "CAYMQ", "CAYTO", "CAYVR", "CL", "CN", "CO", "CR", "HR", "KH", "CZ", "DK", "EE", "EC", "EG", "FI", "FR", "FRPAR", "GE", "GR", "DE", "HK", "HU", "IE", "ID", "IL", "IM", "IN", "IS", "IT", "ITMIL", "ITROM", "JP", "KG", "KZ", "LA", "LI", "LT", "LU", "LV", "ME", "MC", "MD", "MT", "MX", "MY", "NL", "NO", "NP", "NZ", "PA", "PE", "PH", "PK", "PL", "PT", "RO", "RU", "SG", "KR", "ES", "ESBCN", "SE", "SK", "ZA", "CH", "TH", "TR", "TW", "UA", "US", "USATL", "USBOS", "USCLT", "USCHI", "USCOL", "USDAL", "USHOU", "USIND", "USMCI", "USLAS", "USLAX", "USMIA", "USEWR", "USNYC", "USORD", "USPHL", "USPHX", "USPDX", "USSFO", "USSJC", "USSEA", "USWAS", "UY", "AE", "GB", "GBCVT", "VE", "VN"]
     options=Options()
     service=Service('./drivers/geckodriver-v0.30.0-linux64/geckodriver')
     options.set_preference("browser.download.folderList", 2)
@@ -98,7 +114,6 @@ async def main():
     options.set_preference("browser.download.dir", f"{downpath}/{q_safe}")
     options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/epub+zip,application/vnd.airzip.filesecure.azs,application/octet-stream")
     driver = webdriver.Firefox(service=service, options=options)
-
     for current_set in all_sets :
         # print(current_set["url"])
         fp = urllib.request.urlopen(current_set["url"])
@@ -115,24 +130,29 @@ async def main():
             tmp1 = a.get('href')
             url = str(f'{tmp0}{tmp1}')
             # print(url)
-
-        driver.implicitly_wait(1)
-        driver.get(current_set["url"])
-        print('Page title: ' + driver.title)
-        WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")))
-        try :
-            element = driver.find_element(By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")
-        except :
-            element = driver.find_element(By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/b/div[1]/div[1]/div[1]/div/a")
-        element.click()
+        # print('fuck you')
+        while True :
+            # print("here")
+            driver.get(current_set["url"])
+            print('Page title: ' + driver.title)
+            try:
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")))
+            except :
+                try :
+                    WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")))
+                except :
+                    pass
+            try :
+                element = driver.find_element(By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")
+            except :
+                element = driver.find_element(By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/b/div[1]/div[1]/div[1]/div/a")
+            element.click()
+            if check_exists_by_xpath(driver, '/html/body/table/tbody/tr[2]/td/div/div/div/section') == True :
+                reload_vpn()
+            else :
+                break
+        # print('there')
         # driver.implicitly_wait(10)
-        ran += 1
-        if ran == 5 :
-            print('reloading vpn')
-            os.system('hotspotshield disconnect')
-            time.sleep(1)
-            os.system('hotspotshield connect')
-            time.sleep(1)
     driver.quit()
 
 
