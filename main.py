@@ -43,8 +43,18 @@ with open("loaded.txt", "r") as f:
 	for line in f:
 		loaded.append(line.strip())
 
-def reload_vpn() :
+def reload_vpn(q_safe) :
 	global loc
+	print("File Download wait.......")
+	while True:
+		file = glob.glob( f"{downpath}/{q_safe}/*.part")
+		if file:
+			print("Download Pending.......")
+			time.sleep(5)
+			continue
+		else:
+			print('File Downloaded')
+			break
 	time.sleep(2)
 	print('reloading vpn')
 	os.system('hotspotshield disconnect')
@@ -70,11 +80,13 @@ async def main():
 	await lib.init()
 	newline = "\n"
 	lang = list(); inp = input('please input languages, comma separated: '); lang = [*inp.split(', ')]
-	format = list(); inp = input('please input format, comma separated: '); format = [*inp.split(', ')];
+	format = list(); inp = input('please input format, comma separated: '); format = [*inp.split(', ')]
+	remove_dbl = True
 	exact = True
 	if input('exact search [Yn]: ').lower() == 'n' : exact = False
+	if input('remove double [Yn]: ').lower() == 'n' : remove_dbl = False
 	q = (f'{str(input("search query: "))}')
-	print(f'searching for querry {q} | languages = {lang} | formats = {format} | exact = {exact}')
+	print(f'searching for querry {q} | languages = {lang} | formats = {format} | exact = {exact} | remove_dbl = {remove_dbl}')
 	paginator = await lib.search(q=q, count=50, extensions=[*format], lang=[*lang], exact=exact)  #
 	all_results = list()
 	print('scraping zlibrary')
@@ -84,29 +96,33 @@ async def main():
 		if (len(paginator.result) == 1) : break
 
 	filtered_results = list()
-	print('removing double\n')
-	h = (len(all_results))
-	j = 0
-	for i in all_results :
-		hit = 0
-		for x in all_results:
-			print('\r																  ', end='')
-			print(f'\rchecked {j}/{h}', end='')
-			if namecmp(i["name"], x["name"]) :
-				if str(i["extension"]).lower() == str(x["extension"]).lower() :
-					if str(i["language"]).lower() == str(x["language"]).lower() :
-						hit += 1
-			if hit == 2: break
-		j += 1
-		if hit == 1 :
-			filtered_results.append(i)
+	if remove_dbl == True :
+		print('removing double\n')
+		h = (len(all_results))
+		j = 0
+		for i in all_results :
+			hit = 0
+			for x in all_results:
+				print('\r																  ', end='')
+				print(f'\rchecked {j}/{h}', end='')
+				if namecmp(i["name"], x["name"]) :
+					if str(i["extension"]).lower() == str(x["extension"]).lower() :
+						if str(i["language"]).lower() == str(x["language"]).lower() :
+							hit += 1
+				if hit == 3: break
+			j += 1
+			if hit == 1 :
+				filtered_results.append(i)
+	else : 
+		filtered_results = all_results
 
 	sorted_results = sorted(filtered_results, key=itemgetter('name') )
 	lst = list()
 	e= int(0)
 	for i in sorted_results: lst.append([i["language"], i["extension"], i["rating"], str([z["author"] for z in i["authors"]]).replace("[", "").replace("]", "").replace("'", ""), i["name"]]); e += 1
 	# Find maximal length of all elements in list
-	df = pd.DataFrame(lst, columns=None)
+	print('\n')
+	df = pd.DataFrame(lst, columns=["lang", "format", "rating", "author(s)", "title"])
 	print(df)
 
 	inp = input('please choose book id [0](use -- for inclusive range or a comma+single space separated list): ') or 0
@@ -124,8 +140,8 @@ async def main():
 	print(ids)
 	all_sets = [sorted_results[int(x)] for x in ids]
 
-	reload_vpn()
 	q_safe = re.sub('\ |\?|\.|\!|\/|\;|\:|\n|\r|\\\'', '', q)
+	reload_vpn(q_safe)
 	os.system(f'mkdir {downpath}/{q_safe}')
 	locations = ["DZ", "AM", "AU", "AUADL", "AUBNE", "AUMEL", "AUPER", "AUSYD", "AT", "AZ", "BS", "BD", "BY", "BZ", "BE", "BT", "BA", "BR", "BN", "BG", "CA", "CAYMQ", "CAYTO", "CAYVR", "CL", "CN", "CO", "CR", "HR", "KH", "CZ", "DK", "EE", "EC", "EG", "FI", "FR", "FRPAR", "GE", "GR", "DE", "HK", "HU", "IE", "ID", "IL", "IM", "IN", "IS", "IT", "ITMIL", "ITROM", "JP", "KG", "KZ", "LA", "LI", "LT", "LU", "LV", "ME", "MC", "MD", "MT", "MX", "MY", "NL", "NO", "NP", "NZ", "PA", "PE", "PH", "PK", "PL", "PT", "RO", "RU", "SG", "KR", "ES", "ESBCN", "SE", "SK", "ZA", "CH", "TH", "TR", "TW", "UA", "US", "USATL", "USBOS", "USCLT", "USCHI", "USCOL", "USDAL", "USHOU", "USIND", "USMCI", "USLAS", "USLAX", "USMIA", "USEWR", "USNYC", "USORD", "USPHL", "USPHX", "USPDX", "USSFO", "USSJC", "USSEA", "USWAS", "UY", "AE", "GB", "GBCVT", "VE", "VN"]
 	options=Options()
@@ -133,8 +149,10 @@ async def main():
 	options.set_preference("browser.download.folderList", 2)
 	# options.set_preference("browser.download.manager.showWhenStarting", "false")
 	options.set_preference("browser.download.dir", f"{downpath}/{q_safe}")
-	options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/epub+zip,application/vnd.airzip.filesecure.azs,application/octet-stream+application/pdf")
+	options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/epub+zip,application/vnd.airzip.filesecure.azs,application/pdf,application/x-pdf,application/octet-stream")
 	driver = webdriver.Firefox(service=service, options=options)
+	lned = len(all_sets)
+	ttle = 1
 	for current_set in all_sets :
 		# # print(current_set["url"])
 		# fp = urllib.request.urlopen(current_set["url"])
@@ -164,6 +182,7 @@ async def main():
 
 			ext = re.sub(r' *? \|\|', '', re.sub(r'^.*?book', '', current_set["url"]))
 			print(ext)
+			print(f'working on book {ttle}/{lned}')
 			if ext in loaded : break
 
 			try:
@@ -184,8 +203,9 @@ async def main():
 					print(f'file not available, or other error on {ext}'); break
 			element.click()
 			if check_exists_by_xpath(driver, '/html/body/table/tbody/tr[2]/td/div/div/div/section') == True :
-				reload_vpn()
+				reload_vpn(q_safe)
 			else :
+				ttle += 1
 				loaded.append(f"{ext} || {driver.title}")
 				with open("loaded.txt", "w") as f:
 					for s in loaded:
