@@ -41,8 +41,8 @@ locations = ["AR", "AM", "AU", "AUADL", "AUBNE", "AUMEL", "AUPER", "AUSYD", "AT"
 loaded = []
 with open("loaded.txt", "r") as f:
 	for line in f:
-		loaded.append(line.strip())
-
+		loaded.append(re.sub(r' .*|', '', line.strip()))
+# for i in loaded: print(i)
 def reload_vpn(q_safe) :
 	global loc
 	print("File Download wait.......")
@@ -50,12 +50,12 @@ def reload_vpn(q_safe) :
 		file = glob.glob( f"{downpath}/{q_safe}/*.part")
 		if file:
 			print("Download Pending.......")
-			time.sleep(5)
+			time.sleep(1)
 			continue
 		else:
 			print('File Downloaded')
 			break
-	time.sleep(2)
+	time.sleep(1)
 	print('reloading vpn')
 	os.system('hotspotshield disconnect')
 	time.sleep(2)
@@ -177,13 +177,13 @@ async def main():
 		# # print('fuck you')
 		while True :
 			# print("here")
-			driver.get(current_set["url"])
-			print('Page title: ' + driver.title)
-
 			ext = re.sub(r' *? \|\|', '', re.sub(r'^.*?book', '', current_set["url"]))
 			print(ext)
 			print(f'working on book {ttle}/{lned}')
-			if ext in loaded : break
+			if ext in loaded : ttle +=1; break
+
+			driver.get(current_set["url"])
+			print('Page title: ' + driver.title)
 
 			try:
 				WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, "//html/body/table/tbody/tr[2]/td/div/div/div/div[2]/div[2]/div[1]/div[1]/div/a")))
