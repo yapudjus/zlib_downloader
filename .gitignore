@@ -5,3 +5,6 @@ geckodriver.log
 out.html
 40ad73
 loaded.txt
+/libs/aria2c/aria2-1.36.0-win-64bit-build1
+/libs/aria2c/aria2-1.36.0-aarch64-linux-android-build1
+/out

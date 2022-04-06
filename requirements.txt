@@ -21,7 +21,6 @@ numpy
 outcome
 pandas
 pip
-pkg-resources
 pycares
 pycparser
 pyOpenSSL
