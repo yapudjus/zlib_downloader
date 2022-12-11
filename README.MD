@@ -1,4 +1,5 @@
 # zlib easy download script
+***AS OF TODAY, THE REMOVAL OF THE CLEARNET WEBSITE HAS IMPACTED THIS SCRIPT ABILITY TO WORK,  I MIGHT WORK ON A TOR VERSION LATER,  BUT NO PROMISES***
 ## usage
     python main.py
 ## instalation
